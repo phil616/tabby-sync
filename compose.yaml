@@ -1,0 +1,64 @@
+name: tabby-config-sync
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-dev}
+        COMMIT: ${COMMIT:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+    image: ${IMAGE:-tabby-config-sync:local}
+    restart: unless-stopped
+    environment:
+      TCS_LISTEN_ADDRESS: :8080
+      TCS_DATABASE_PATH: /data/tabby-sync.db
+      TCS_LOG_LEVEL: ${TCS_LOG_LEVEL:-info}
+      TCS_MAX_BODY_BYTES: ${TCS_MAX_BODY_BYTES:-8388608}
+    volumes:
+      - sync-data:/data
+    networks:
+      - internal
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: [CMD, /usr/local/bin/tabby-config-sync, healthcheck]
+      interval: 30s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  sync-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  internal:
+    driver: bridge

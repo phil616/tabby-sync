@@ -1,0 +1,11 @@
+/data/
+/backups/
+/.env
+/.codegraph/
+/.cursor/
+/tabby-config-sync
+*.db
+*.db-shm
+*.db-wal
+coverage.out
+/dist/

@@ -1,0 +1,77 @@
+version: 2
+
+project_name: tabby-config-sync
+
+before:
+  hooks:
+    - go mod verify
+
+builds:
+  - id: tabby-config-sync
+    main: ./cmd/tabby-config-sync
+    binary: tabby-config-sync
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - >-
+        -s -w
+        -X main.version={{.Version}}
+        -X main.commit={{.Commit}}
+        -X main.buildDate={{.Date}}
+
+archives:
+  - id: release-archives
+    ids:
+      - tabby-config-sync
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - README.md
+      - README.zh-CN.md
+      - SECURITY.md
+      - api/openapi.yaml
+      - compose.yaml
+      - deploy/Caddyfile
+      - .env.example
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - "^style:"
+      - "^Merge "
+
+release:
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## Installation
+
+    Download the archive matching your operating system and architecture, then
+    verify it with `checksums.txt`.
+
+    Docker users can build and deploy from the included Compose configuration.
