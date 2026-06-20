@@ -1,0 +1,33 @@
+[Unit]
+Description=Tabby Config Sync Server
+Documentation=https://github.com/anomalyco/tabby-config-sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tabby-sync
+Group=tabby-sync
+WorkingDirectory=/opt/tabby-sync
+ExecStart=/opt/tabby-sync/tabby-config-sync serve
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+
+Environment=TCS_LISTEN_ADDRESS=:8080
+Environment=TCS_DATABASE_PATH=/opt/tabby-sync/data/tabby-sync.db
+Environment=TCS_LOG_LEVEL=info
+Environment=TCS_MAX_BODY_BYTES=8388608
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/tabby-sync/data
+ReadOnlyPaths=/opt/tabby-sync/tabby-config-sync
+
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target
